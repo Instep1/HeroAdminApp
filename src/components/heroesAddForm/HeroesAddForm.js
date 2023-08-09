@@ -1,20 +1,10 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
-import {useHttp} from '../../hooks/http.hook';
 import {v4 as uuidv4} from 'uuid';
+import store from '../../store';
 
-import { heroAdd } from "../heroesList/heroesSlice";
-
-// Задача для этого компонента:
-// Реализовать создание нового героя с введенными данными. Он должен попадать
-// в общее состояние и отображаться в списке + фильтроваться
-// Уникальный идентификатор персонажа можно сгенерировать через uiid
-// Усложненная задача:
-// Персонаж создается и в файле json при помощи метода POST
-// Дополнительно:
-// Элементы <option></option> желательно сформировать на базе
-// данных из фильтров
+import { useCreateHeroMutation } from "../../api/apiSlice";
+import { selectAll } from "../heroesFilters/heroesFiltersSlice";
 
 const HeroesAddForm = () => {
 
@@ -22,9 +12,10 @@ const HeroesAddForm = () => {
     const [heroDescr, setHeroDescr] = useState('');
     const [heroElement, setHeroElement] = useState('');
 
-    const {filters, filtersLoadingStatus} = useSelector(state => state.filters);
-    const dispatch = useDispatch();
-    const {request} = useHttp();
+    const [createHero, {isLoading}] = useCreateHeroMutation();
+
+    const {filtersLoadingStatus} = useSelector(state => state.filters);
+    const filters = selectAll(store.getState());
 
     const onSubmitHandler = (e) => {
         e.preventDefault();
@@ -36,10 +27,7 @@ const HeroesAddForm = () => {
             element: heroElement
         }
 
-        request('http://localhost:3001/heroes', 'POST', JSON.stringify(newHero))
-            .then(res => console.log(res, 'Успешно добавлен'))
-            .then(dispatch(heroAdd(newHero)))
-            .catch(err => console.log(err));
+        createHero(newHero).unwrap();
 
         setHeroName('');
         setHeroDescr('');
